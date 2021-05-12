@@ -24,7 +24,12 @@ develop a new k8s charm using the Operator Framework:
 """
 
 import logging
+import os
 import textwrap
+
+from contextlib import contextmanager
+
+from kazoo.client import KazooClient
 
 from ops.charm import CharmBase
 from ops.framework import StoredState
@@ -45,7 +50,10 @@ class ZookeeperK8SCharm(CharmBase):
         self.framework.observe(self.on.zookeeper_pebble_ready,
                                self._on_zookeeper_pebble_ready)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self.framework.observe(self.on.fortune_action, self._on_fortune_action)
+        self.framework.observe(self.on.dump_data_action,
+                               self._on_dump_data_action)
+        self.framework.observe(self.on.seed_data_action,
+                               self._on_seed_data_action)
         self._stored.set_default(things=[])
 
     def _on_zookeeper_pebble_ready(self, event):
@@ -87,21 +95,35 @@ class ZookeeperK8SCharm(CharmBase):
         self.__push_zookeeper_config(container)
         self.__restart_zookeeper(container)
 
-    def _on_fortune_action(self, event):
-        """Just an example to show how to receive actions.
-
-        FIXME: change this example to suit your needs.
-        If you don't need to handle actions, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the actions.py file.
+    def _on_dump_data_action(self, event):
+        """Action that prints ZooKeeper's content.
 
         Learn more about actions at https://juju.is/docs/sdk/actions
         """
-        fail = event.params["fail"]
-        if fail:
-            event.fail(fail)
-        else:
-            event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
+        def _get_tree(path, zk):
+            """Recursive function returning the tree as a dict.
+            """
+            children = zk.get_children(path)
+            if not len(children):
+                value = zk.get(path)[0]
+                return value
+            return {child: _get_tree(os.path.join(path, child), zk)
+                    for child in children}
+
+        with self.__zookeeper_client() as zk:
+            content = _get_tree('/', zk)
+        event.set_results({'content': content})
+
+    def _on_seed_data_action(self, event):
+        """Action that seeds ZooKeeper with some test data.
+
+        Learn more about actions at https://juju.is/docs/sdk/actions
+        """
+        with self.__zookeeper_client() as zk:
+            zk.ensure_path('/test-seed')
+            zk.create('/test-seed/my-first-key', b'my first value')
+            zk.create('/test-seed/my-second-key', b'my second value')
+        event.set_results({})
 
     def __push_zookeeper_config(self, workload_container):
         """Write ZooKeeper's config file on disk.
@@ -150,6 +172,16 @@ class ZookeeperK8SCharm(CharmBase):
         workload_container.stop(self.__PEBBLE_SERVICE_NAME)
         # Autostart any services that were defined with startup: enabled :
         workload_container.autostart()
+
+    @contextmanager
+    def __zookeeper_client(self):
+        client_port = self.config['client-port']
+        zk = KazooClient(hosts='127.0.0.1:{}'.format(client_port))
+        zk.start()
+        try:
+            yield zk
+        finally:
+            zk.stop()
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ Where:
 
 * `zookeeper-image`: [OCI](https://opencontainers.org/) (e.g. Docker) ZooKeeper
   image. Use `zookeeper` for the
-  [latest image from DockerHub](https://hub.docker.com/_/zookeeper)
+  [latest image from DockerHub](https://hub.docker.com/_/zookeeper).
 
 ### Inspecting/Operating
 
@@ -51,6 +51,22 @@ $ kubectl get pods --namespace=myzookeeper
 NAME                             READY   STATUS    RESTARTS   AGE
 modeloperator-5d4469d7dc-q299q   1/1     Running   0          10m
 zookeeper-k8s-0                  2/2     Running   0          7m44s
+```
+
+```
+$ juju run-action zookeeper-k8s/leader seed-data --wait  # seed with dummy data
+$ juju run-action zookeeper-k8s/leader dump-data --wait
+unit-zookeeper-k8s-0:
+  UnitId: zookeeper-k8s/0
+  id: "6"
+  results:
+    content: '{''test-seed'': {''my-first-key'': b''my first value'', ''my-second-key'':
+      b''my second value''}, ''zookeeper'': {''config'': b'''', ''quota'': b''''}}'
+  status: completed
+  timing:
+    completed: 2021-05-14 11:52:58 +0000 UTC
+    enqueued: 2021-05-14 11:52:56 +0000 UTC
+    started: 2021-05-14 11:52:57 +0000 UTC
 ```
 
 ```

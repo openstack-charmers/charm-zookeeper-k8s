@@ -34,18 +34,36 @@ class TestCharm(unittest.TestCase):
         mock_push.assert_called_once_with(
             path='/conf/zoo.cfg', source=SuperstringOf('clientPort=1234'))
 
-    def test_action(self):
-        # the harness doesn't (yet!) help much with actions themselves
-        action_event = Mock(params={"fail": ""})
-        self.harness.charm._on_fortune_action(action_event)
+    @patch('charm.KazooClient')
+    def test_dump_data_action(self, mock_zk):
+        def get_children_mock(path):
+            if path == '/':
+                return ['first-child', 'second-child']
+            return []
 
+        mock_zk.return_value.get_children.side_effect = get_children_mock
+        mock_zk.return_value.get.return_value = ('my value', 'some metadata')
+        action_event = Mock()
+
+        self.harness.charm._on_dump_data_action(action_event)
+
+        mock_zk.assert_called_once_with(hosts='127.0.0.1:2181')
+        action_event.set_results.assert_called_once_with({
+            'content': {
+                'first-child': 'my value',
+                'second-child': 'my value',
+            }
+        })
+
+    @patch('charm.KazooClient')
+    def test_seed_data_action(self, mock_zk):
+        action_event = Mock()
+
+        self.harness.charm._on_seed_data_action(action_event)
+
+        mock_zk.assert_called_once_with(hosts='127.0.0.1:2181')
+        mock_zk.return_value.ensure_path.assert_called_once_with('/test-seed')
         self.assertTrue(action_event.set_results.called)
-
-    def test_action_fail(self):
-        action_event = Mock(params={"fail": "fail this"})
-        self.harness.charm._on_fortune_action(action_event)
-
-        self.assertEqual(action_event.fail.call_args, [("fail this",)])
 
     @patch('ops.model.Container.push')
     def test_zookeeper_pebble_ready(self, mock_push):

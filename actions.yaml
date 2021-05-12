@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-fortune:
-  description: Returns a pithy phrase. FIXME remove
-  params:
-    fail:
-      description: "Fail with this message"
-      type: string
-      default: ""
+dump-data:
+  description: Prints Zookeeper's content
+seed-data:
+  description: Seeds Zookeeper with some initial test data
