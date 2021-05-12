@@ -14,6 +14,9 @@ a distributed system and helping with synchronization between components of that
 system. This is for example used by [Zuul](https://zuul-ci.org/docs/zuul/),
 OpenStack's CI system.
 
+A non-sidecar version of this charm is also
+[available on the Charmhub](https://charmhub.io/charmed-osm-zookeeper-k8s).
+
 ## Usage
 
 ### Deploying
@@ -48,6 +51,11 @@ $ kubectl get pods --namespace=myzookeeper
 NAME                             READY   STATUS    RESTARTS   AGE
 modeloperator-5d4469d7dc-q299q   1/1     Running   0          10m
 zookeeper-k8s-0                  2/2     Running   0          7m44s
+```
+
+```
+$ juju config zookeeper-k8s client-port
+2181
 ```
 
 ```

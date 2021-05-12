@@ -83,7 +83,7 @@ command-line.
 
 ## Pebble
 
-this forces me to duplicate the docker `CMD`:
+This forces me to duplicate the docker `CMD`:
 
 ```
         pebble_layer = {
@@ -96,8 +96,65 @@ this forces me to duplicate the docker `CMD`:
                     # duplicate of: CMD ["gunicorn" "-b" "0.0.0.0:80" "httpbin:app" "-k" "gevent"]
                     "command": "gunicorn -b 0.0.0.0:80 httpbin:app -k gevent",
                     "startup": "enabled",
-                    "environment": {"thing": self.model.config["thing"]},
                 }
             },
         }
+```
+
+
+## Operator Framework
+
+### Browsing the workload's filesystem
+
+It took me a while to figure this out:
+
+```
+# Get pod name:
+kubectl get all --namespace=<juju-model-name>
+
+# Get workload container name:
+kubectl describe pods --namespace=<juju-model-name>
+
+# Browse the workload's filesystem:
+kubectl exec --namespace=<juju-model-name> <pod-name> -c <workload-container-name> -- ls /
+kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper -- ls /
+kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper --stdin --tty -- bash
+```
+
+### Harness
+
+`push()` (Pebble) needs to be mocked away:
+
+```
+    @patch('ops.model.Container.push')
+    def test_config_changed(self, mock_push):
+        self.harness.update_config({"thing": "foo"})
+```
+
+otherwise:
+
+```
+======================================================================
+ERROR: test_config_changed (tests.test_charm.TestCharm)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/tests/test_charm.py", line 33, in test_config_changed
+    self.harness.update_config({"thing": "foo"})
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/venv/lib/python3.6/site-packages/ops/testing.py", line 636, in update_config
+    self._charm.on.config_changed.emit()
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/venv/lib/python3.6/site-packages/ops/framework.py", line 278, in emit
+    framework._emit(event)
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/venv/lib/python3.6/site-packages/ops/framework.py", line 722, in _emit
+    self._reemit(event_path)
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/venv/lib/python3.6/site-packages/ops/framework.py", line 767, in _reemit
+    custom_handler(event)
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/src/charm.py", line 93, in _on_config_changed
+    self.__push_zookeeper_config(container)
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/src/charm.py", line 147, in __push_zookeeper_config
+    source=config_file_content)
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/venv/lib/python3.6/site-packages/ops/model.py", line 1133, in push
+    group_id=group_id, group=group)
+  File "/home/lourot/Documents/git/canonical/charm-zookeeper-k8s/venv/lib/python3.6/site-packages/ops/testing.py", line 1099, in push
+    raise NotImplementedError(self.push)
+NotImplementedError: <bound method _TestingPebbleClient.push of <ops.testing._TestingPebbleClient object at 0x7ff3e8df0710>>
 ```

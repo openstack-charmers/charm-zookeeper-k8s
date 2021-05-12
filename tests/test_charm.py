@@ -15,7 +15,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from charm import ZookeeperK8SCharm
 from ops.model import ActiveStatus
@@ -28,10 +28,11 @@ class TestCharm(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
-    def test_config_changed(self):
-        self.assertEqual(list(self.harness.charm._stored.things), [])
-        self.harness.update_config({"thing": "foo"})
-        self.assertEqual(list(self.harness.charm._stored.things), ["foo"])
+    @patch('ops.model.Container.push')
+    def test_config_changed(self, mock_push):
+        self.harness.update_config({'client-port': 1234})
+        mock_push.assert_called_once_with(
+            path='/conf/zoo.cfg', source=SuperstringOf('clientPort=1234'))
 
     def test_action(self):
         # the harness doesn't (yet!) help much with actions themselves
@@ -46,7 +47,8 @@ class TestCharm(unittest.TestCase):
 
         self.assertEqual(action_event.fail.call_args, [("fail this",)])
 
-    def test_zookeeper_pebble_ready(self):
+    @patch('ops.model.Container.push')
+    def test_zookeeper_pebble_ready(self, mock_push):
         # Check the initial Pebble plan is empty
         initial_plan = self.harness.get_container_pebble_plan("zookeeper")
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
@@ -58,7 +60,6 @@ class TestCharm(unittest.TestCase):
                     "summary": "zookeeper",
                     "command": "/docker-entrypoint.sh zkServer.sh start-foreground",
                     "startup": "enabled",
-                    "environment": {"thing": "🎁"},
                 }
             },
         }
@@ -77,3 +78,11 @@ class TestCharm(unittest.TestCase):
         self.assertTrue(service.is_running())
         # Ensure we set an ActiveStatus with no message
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
+        # Check the ZooKeeper config was written on disk
+        mock_push.assert_called_once_with(
+            path='/conf/zoo.cfg', source=SuperstringOf('clientPort=2181'))
+
+
+class SuperstringOf(str):
+    def __eq__(self, other):
+        return self in other

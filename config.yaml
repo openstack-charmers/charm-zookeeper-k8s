@@ -13,7 +13,21 @@
 # limitations under the License.
 
 options:
-  thing:
-    default: something
-    description: A thing used by the charm. FIXME remove
-    type: string
+  client-port:
+    type: int
+    description: |
+      Port to listen for client connections.
+      See https://zookeeper.apache.org/doc/current/zookeeperStarted.html
+    default: 2181
+  server-port:
+    type: int
+    description: |
+      Port used by peers to connect to the ZooKeeper leader.
+      See https://zookeeper.apache.org/doc/current/zookeeperStarted.html
+    default: 2888
+  leader-election-port:
+    type: int
+    description: |
+      Additional port used for ZooKeeper leader election.
+      See https://zookeeper.apache.org/doc/current/zookeeperStarted.html
+    default: 3888
