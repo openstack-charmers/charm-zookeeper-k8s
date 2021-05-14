@@ -43,17 +43,28 @@ class ZookeeperK8SCharm(CharmBase):
     """Charm the service."""
 
     __PEBBLE_SERVICE_NAME = 'zookeeper'
+    __INGRESS_ADDR_REL_DATA_KEY = 'ingress-address'
     _stored = StoredState()  # FIXME remove?
 
     def __init__(self, *args):
         super().__init__(*args)
         self.framework.observe(self.on.zookeeper_pebble_ready,
                                self._on_zookeeper_pebble_ready)
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
+
+        self.framework.observe(self.on.config_changed,
+                               self._on_config_or_peer_changed)
+        self.framework.observe(self.on.replicas_relation_joined,
+                               self._on_config_or_peer_changed)
+        self.framework.observe(self.on.replicas_relation_departed,
+                               self._on_config_or_peer_changed)
+        self.framework.observe(self.on.replicas_relation_changed,
+                               self._on_config_or_peer_changed)
+
         self.framework.observe(self.on.dump_data_action,
                                self._on_dump_data_action)
         self.framework.observe(self.on.seed_data_action,
                                self._on_seed_data_action)
+
         self._stored.set_default(things=[])
 
     def _on_zookeeper_pebble_ready(self, event):
@@ -63,7 +74,12 @@ class ZookeeperK8SCharm(CharmBase):
         """
         container = event.workload
 
-        self.__push_zookeeper_config(container)
+        relation = self.model.get_relation('replicas')
+        my_ingress_address = self._get_my_ingress_address(relation)
+        all_unit_ingress_addresses = self._get_all_unit_ingress_addresses(
+            relation)
+        self.__push_zookeeper_config(container, my_ingress_address,
+                                     all_unit_ingress_addresses)
 
         pebble_layer = {
             "summary": "zookeeper layer",
@@ -86,17 +102,23 @@ class ZookeeperK8SCharm(CharmBase):
         # https://juju.is/docs/sdk/constructs#heading--statuses
         self.unit.status = ActiveStatus()
 
-    def _on_config_changed(self, _):
-        """Adapt ZooKeeper on Juju config changes.
+    def _on_config_or_peer_changed(self, _):
+        """Adapt ZooKeeper's config to Juju changes."""
+        logging.debug('Handling Juju config or peer change...')
 
-        Learn more about config at https://juju.is/docs/sdk/config
-        """
+        relation = self.model.get_relation('replicas')
+        my_ingress_address = self._get_my_ingress_address(relation)
+        self._share_address_with_peers(my_ingress_address, relation)
+        all_unit_ingress_addresses = self._get_all_unit_ingress_addresses(
+            relation)
+
         container = self.unit.get_container('zookeeper')
-        self.__push_zookeeper_config(container)
+        self.__push_zookeeper_config(container, my_ingress_address,
+                                     all_unit_ingress_addresses)
         self.__restart_zookeeper(container)
 
     def _on_dump_data_action(self, event):
-        """Action that prints ZooKeeper's content.
+        """Action that prints ZooKeeper's content on a given unit.
 
         Learn more about actions at https://juju.is/docs/sdk/actions
         """
@@ -125,19 +147,86 @@ class ZookeeperK8SCharm(CharmBase):
             zk.create('/test-seed/my-second-key', b'my second value')
         event.set_results({})
 
-    def __push_zookeeper_config(self, workload_container):
-        """Write ZooKeeper's config file on disk.
+    def _share_address_with_peers(self, my_ingress_address, relation):
+        """Share this unit's ingress address with peer units."""
+        relation.data[self.unit][self.__INGRESS_ADDR_REL_DATA_KEY] = (
+            my_ingress_address)
+
+    def _get_all_unit_ingress_addresses(self, relation):
+        """Get all ingress addresses shared by all peers over the relation.
+
+        Including the current unit.
+
+        :returns: Each unit's (first) ingress address.
+        :rtype: List[str]
+        """
+        result = set()
+
+        my_ingress_address = self._get_my_ingress_address(relation)
+        if my_ingress_address is not None:
+            result.add(my_ingress_address)
+
+        for unit in relation.units:
+            try:
+                unit_ingress_address = relation.data[unit][
+                    self.__INGRESS_ADDR_REL_DATA_KEY]
+            except KeyError:
+                # This unit hasn't shared its address yet. It's OK as there will
+                # be other hook executions later calling this again:
+                continue
+            if unit_ingress_address is not None:
+                result.add(unit_ingress_address)
+
+        logging.debug('All unit ingress addresses: {}'.format(
+            ', '.join(result)))
+
+        return list(result)
+
+    def _get_my_ingress_address(self, relation):
+        """Returns this unit's address on which it wishes to be contacted.
+
+        :returns: This unit's (first) ingress address.
+        :rtype: str
+        """
+        network = self.model.get_binding(relation).network
+        # There seems to be a bug and `ingress_address` is always None. See
+        # FIXME link to GitHub/Launchpad bug
+        return str(network.ingress_address or network.bind_address)
+
+    def __push_zookeeper_config(self, workload_container, my_ingress_address,
+                                all_unit_ingress_addresses):
+        """Write ZooKeeper's config files to disk.
+
+        See https://zookeeper.apache.org/doc/current/zookeeperStarted.html
 
         :param workload_container: the container in which ZooKeeper is running
         :type workload_container: ops.model.Container
+        :param all_unit_ingress_addresses: Each unit's (first) ingress address.
+        :type all_unit_ingress_addresses: List[str]
         """
-        CONFIG_FILE_PATH = '/conf/zoo.cfg'
+        MAIN_CONFIG_FILE_PATH = '/conf/zoo.cfg'
+        ID_CONFIG_FILE_PATH = '/data/myid'
 
         client_port = self.config['client-port']
         server_port = self.config['server-port']
         leader_election_port = self.config['leader-election-port']
 
-        config_file_content = textwrap.dedent(f'''\
+        # NOTE(lourot): All server IDs have to match in the config file of all
+        # units. Thus we sort the list in the same way on all units.
+        server_addresses = sorted(all_unit_ingress_addresses)
+        server_config_part = ''
+        for i in range(len(server_addresses)):
+            server_id = i + 1
+            server_address = server_addresses[i]
+            if server_address == my_ingress_address:
+                my_id = server_id
+
+            server_config_part += (
+                f'server.{server_id}={server_address}:'
+                f'{server_port}:{leader_election_port}\n'
+            )
+
+        main_config_file_content = textwrap.dedent(f'''\
         # Generated by the Charmed Operator
         dataDir=/data
         clientPort={client_port}
@@ -148,14 +237,17 @@ class ZookeeperK8SCharm(CharmBase):
         autopurge.snapRetainCount=3
         autopurge.purgeInterval=0
         maxClientCnxns=60
-        standaloneEnabled=true
         admin.enableServer=true
-        server.1=localhost:{server_port}:{leader_election_port}
-        ''')
-        logging.debug('Writing config to {}:\n{}'.format(CONFIG_FILE_PATH,
-                                                         config_file_content))
-        workload_container.push(path=CONFIG_FILE_PATH,
-                                source=config_file_content)
+        ''') + server_config_part
+
+        id_config_file_content = f'{my_id}\n'
+
+        for path, content in (
+                (MAIN_CONFIG_FILE_PATH, main_config_file_content),
+                (ID_CONFIG_FILE_PATH, id_config_file_content)
+        ):
+            logging.debug('Writing config to {}:\n{}'.format(path, content))
+            workload_container.push(path=path, source=content)
 
     def __restart_zookeeper(self, workload_container):
         """Restart ZooKeeper by restarting the Pebble services.

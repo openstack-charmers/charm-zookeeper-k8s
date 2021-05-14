@@ -13,6 +13,6 @@
 # limitations under the License.
 
 dump-data:
-  description: Prints Zookeeper's content
+  description: Prints Zookeeper's content on a given unit
 seed-data:
   description: Seeds Zookeeper with some initial test data

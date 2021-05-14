@@ -35,3 +35,7 @@ resources:
     description: |
       OCI image for zookeeper. Recommended value: 'zookeeper'. See
       https://hub.docker.com/_/zookeeper
+
+peers:
+  replicas:
+    interface: charm-replica

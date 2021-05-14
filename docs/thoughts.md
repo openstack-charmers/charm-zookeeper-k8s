@@ -51,7 +51,7 @@ $ sudo snap install --classic juju
 ### juju ssh
 
 As a newbie it's not clear to me if `juju ssh zookeeper-k8s/0` will bring me to
-ZooKeeper container or to the sidecar container
+the ZooKeeper container or to the sidecar container
 
 ```
 $ juju status
@@ -104,6 +104,20 @@ This forces me to duplicate the docker `CMD`:
 
 ## Operator Framework
 
+### Changing the workload's exposed port
+
+My workload docker image does `EXPOSE 2181` and I wanted to be able to change
+that port with a Juju config option named `client-port`. I searched a long time
+in the Operator Framework's, Juju's and Kubernetes's documentation to find out
+how to do a port change or mapping (I have extended experience with pure Docker
+and this made sense to me). Possibly something like a
+[k8s service](https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service).
+
+It took me a long time to understand that I didn't need to do anything of that
+at all: all I had to do was to tell my workload software to listen to a
+different port, and the Juju+k8s stack just exposes all ports anyway.
+
+
 ### Browsing the workload's filesystem
 
 It took me a while to figure this out:
@@ -120,6 +134,7 @@ kubectl exec --namespace=<juju-model-name> <pod-name> -c <workload-container-nam
 kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper -- ls /
 kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper --stdin --tty -- bash
 ```
+
 
 ### Harness
 
@@ -158,3 +173,40 @@ Traceback (most recent call last):
     raise NotImplementedError(self.push)
 NotImplementedError: <bound method _TestingPebbleClient.push of <ops.testing._TestingPebbleClient object at 0x7ff3e8df0710>>
 ```
+
+
+### Getting all peer's ingress address
+
+This seems to be a wheel that many charms will need to re-invent: for now we
+need to let each unit actively share its ingress address to its peers.
+
+
+#### ingress_address returs None
+
+```
+# ops/model.py
+
+class Network:
+    """Network space details.
+    [...]
+        ingress_addresses: A list of :class:`ipaddress.ip_address` objects representing the IP
+            addresses that other units should use to get in touch with you.
+    [...]
+    """
+
+    @property
+    def ingress_address(self):
+        """The address other applications should use to connect to your unit.
+        [...]
+        """
+```
+
+But it always returns `None` and one needs to use `bind_address` instead
+
+
+## Discourse
+
+Not having my documentation together with the source code makes it really hard
+for my users to find the documentation that applies to a specific version of
+the charm. Which channel (stable, edge) should the Discourse page be showing?
+If stable, where do I develop the edge documentation?

@@ -15,7 +15,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, call, Mock, patch
 
 from charm import ZookeeperK8SCharm
 from ops.model import ActiveStatus
@@ -29,10 +29,22 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
 
     @patch('ops.model.Container.push')
-    def test_config_changed(self, mock_push):
+    @patch('charm.ZookeeperK8SCharm._get_all_unit_ingress_addresses')
+    @patch('charm.ZookeeperK8SCharm._share_address_with_peers')
+    @patch('charm.ZookeeperK8SCharm._get_my_ingress_address')
+    def test_config_changed(self, mock_my_address, mock_share_address,
+                            mock_get_all_addresses, mock_push):
+        mock_my_address.return_value = '10.1.0.42'
+        mock_get_all_addresses.return_value = ['10.1.0.42', '10.1.0.43',
+                                               '10.1.0.44']
+
         self.harness.update_config({'client-port': 1234})
-        mock_push.assert_called_once_with(
-            path='/conf/zoo.cfg', source=SuperstringOf('clientPort=1234'))
+        mock_share_address.assert_called_once_with('10.1.0.42', ANY)
+        mock_push.assert_has_calls([
+            call(path='/conf/zoo.cfg', source=SuperstringOf(
+                ['clientPort=1234', '10.1.0.42', '10.1.0.43', '10.1.0.44'])),
+            call(path='/data/myid', source=SuperstringOf(['1']))
+        ], any_order=True)
 
     @patch('charm.KazooClient')
     def test_dump_data_action(self, mock_zk):
@@ -66,7 +78,15 @@ class TestCharm(unittest.TestCase):
         self.assertTrue(action_event.set_results.called)
 
     @patch('ops.model.Container.push')
-    def test_zookeeper_pebble_ready(self, mock_push):
+    @patch('charm.ZookeeperK8SCharm._get_all_unit_ingress_addresses')
+    @patch('charm.ZookeeperK8SCharm._share_address_with_peers')
+    @patch('charm.ZookeeperK8SCharm._get_my_ingress_address')
+    def test_zookeeper_pebble_ready(self, mock_my_address, mock_share_address,
+                                    mock_get_all_addresses, mock_push):
+        mock_my_address.return_value = '10.1.0.42'
+        mock_get_all_addresses.return_value = ['10.1.0.42', '10.1.0.43',
+                                               '10.1.0.44']
+
         # Check the initial Pebble plan is empty
         initial_plan = self.harness.get_container_pebble_plan("zookeeper")
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
@@ -97,10 +117,25 @@ class TestCharm(unittest.TestCase):
         # Ensure we set an ActiveStatus with no message
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
         # Check the ZooKeeper config was written on disk
-        mock_push.assert_called_once_with(
-            path='/conf/zoo.cfg', source=SuperstringOf('clientPort=2181'))
+        mock_push.assert_has_calls([
+            call(path='/conf/zoo.cfg',
+                 source=SuperstringOf(['clientPort=2181'])),
+            call(path='/data/myid', source=SuperstringOf(['1']))
+        ], any_order=True)
 
 
-class SuperstringOf(str):
-    def __eq__(self, other):
-        return self in other
+class SuperstringOf:
+    """Mock argument matcher that will match any superstring of the given
+    expected substrings.
+    """
+    def __init__(self, expected_substrings):
+        self.__expected_substrings = expected_substrings
+
+    def __repr__(self):
+        return 'SuperstringOf(' + str(self.__expected_substrings) + ')'
+
+    def __eq__(self, expected_superstring):
+        for expected_substring in self.__expected_substrings:
+            if expected_substring not in expected_superstring:
+                return False
+        return True
