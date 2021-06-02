@@ -23,7 +23,7 @@ description: |
   of a distributed system and helping with synchronization between components of
   that system.
 summary: |
-  Zookeeper k8s sidecar charm
+  ZooKeeper k8s sidecar charm
 
 containers:
   zookeeper:
@@ -35,6 +35,11 @@ resources:
     description: |
       OCI image for zookeeper. Recommended value: 'zookeeper'. See
       https://hub.docker.com/_/zookeeper
+
+provides:
+  client:
+    interface: zookeeper
+    optional: true
 
 peers:
   replicas:

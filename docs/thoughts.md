@@ -260,7 +260,9 @@ Even if the charm is made with the Operator framework, the Web UI still shows
 > While many Reactive Framework charms work on machines today, it’s recommended
 > to create new charms with the Operator Framework.
 
-`jkfran` had to fix it manually for me.
+Apparently the Web team has to
+[fix it manually](https://github.com/canonical-web-and-design/charmhub.io/pull/1033)
+for each and every sidecar charm.
 
 
 ## Discourse

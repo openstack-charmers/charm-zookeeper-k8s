@@ -26,3 +26,9 @@ latest   stable     -          -           -
 See the
 [Charmed Operator Framework documentation](https://juju.is/docs/sdk/publishing)
 for more details.
+
+## Publishing updates to the [`zookeeper` interface/library](../lib/charms/zookeeper_k8s/v0/zookeeper.py)
+
+```bash
+charmcraft publish-lib charms.zookeeper_k8s.v0.zookeeper
+```

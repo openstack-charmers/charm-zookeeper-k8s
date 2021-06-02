@@ -27,10 +27,12 @@ import logging
 import os
 import textwrap
 
+from charms.zookeeper_k8s.v0.zookeeper import (
+    INGRESS_ADDR_CLIENT_REL_DATA_KEY, PORT_CLIENT_REL_DATA_KEY)
+
 from contextlib import contextmanager
 
 from kazoo.client import KazooClient
-
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -43,7 +45,8 @@ class ZookeeperK8SCharm(CharmBase):
     """Charm the service."""
 
     __PEBBLE_SERVICE_NAME = 'zookeeper'
-    __INGRESS_ADDR_REL_DATA_KEY = 'ingress-address'
+    __INGRESS_ADDR_PEER_REL_DATA_KEY = 'ingress-address'
+    __CLIENT_PORT_CONFIG_KEY = 'client-port'
     _stored = StoredState()  # FIXME remove?
 
     def __init__(self, *args):
@@ -59,6 +62,9 @@ class ZookeeperK8SCharm(CharmBase):
                                self._on_config_or_peer_changed)
         self.framework.observe(self.on.replicas_relation_changed,
                                self._on_config_or_peer_changed)
+
+        self.framework.observe(self.on.client_relation_joined,
+                               self._on_client_joined)
 
         self.framework.observe(self.on.dump_data_action,
                                self._on_dump_data_action)
@@ -103,19 +109,28 @@ class ZookeeperK8SCharm(CharmBase):
         self.unit.status = ActiveStatus()
 
     def _on_config_or_peer_changed(self, _):
-        """Adapt ZooKeeper's config to Juju changes."""
+        """Adapt ZooKeeper's config to Juju changes and inform client charm."""
         logging.debug('Handling Juju config or peer change...')
 
-        relation = self.model.get_relation('replicas')
-        my_ingress_address = self._get_my_ingress_address(relation)
-        self._share_address_with_peers(my_ingress_address, relation)
+        peer_relation = self.model.get_relation('replicas')
+        my_ingress_address = self._get_my_ingress_address(peer_relation)
+        self._share_address_with_peers(my_ingress_address, peer_relation)
         all_unit_ingress_addresses = self._get_all_unit_ingress_addresses(
-            relation)
+            peer_relation)
 
         container = self.unit.get_container('zookeeper')
         self.__push_zookeeper_config(container, my_ingress_address,
                                      all_unit_ingress_addresses)
         self.__restart_zookeeper(container)
+
+        self._share_addresses_and_port_with_client(all_unit_ingress_addresses)
+
+    def _on_client_joined(self, _):
+        """Inform client charm on how to connect to ZooKeeper."""
+        peer_relation = self.model.get_relation('replicas')
+        all_unit_ingress_addresses = self._get_all_unit_ingress_addresses(
+            peer_relation)
+        self._share_addresses_and_port_with_client(all_unit_ingress_addresses)
 
     def _on_dump_data_action(self, event):
         """Action that prints ZooKeeper's content on a given unit.
@@ -149,8 +164,31 @@ class ZookeeperK8SCharm(CharmBase):
 
     def _share_address_with_peers(self, my_ingress_address, relation):
         """Share this unit's ingress address with peer units."""
-        relation.data[self.unit][self.__INGRESS_ADDR_REL_DATA_KEY] = (
+        relation.data[self.unit][self.__INGRESS_ADDR_PEER_REL_DATA_KEY] = (
             my_ingress_address)
+
+    def _share_addresses_and_port_with_client(self, all_unit_ingress_addresses):
+        """Share ingress addresses and port with the related client charm if
+        possible.
+
+        :param all_unit_ingress_addresses: Each unit's (first) ingress address.
+        :type all_unit_ingress_addresses: List[str]
+        """
+        # Do nothing if we're not the leader
+        if not self.model.unit.is_leader():
+            return
+
+        relation = self.model.get_relation('client')
+        if relation is None:
+            # That relation doesn't exist yet. Nothing can be done now. Will be
+            # done later.
+            return
+
+        relation.data[self.model.app][INGRESS_ADDR_CLIENT_REL_DATA_KEY] = (
+            all_unit_ingress_addresses)
+
+        port = self.config[self.__CLIENT_PORT_CONFIG_KEY]
+        relation.data[self.model.app][PORT_CLIENT_REL_DATA_KEY] = port
 
     def _get_all_unit_ingress_addresses(self, relation):
         """Get all ingress addresses shared by all peers over the relation.
@@ -169,7 +207,7 @@ class ZookeeperK8SCharm(CharmBase):
         for unit in relation.units:
             try:
                 unit_ingress_address = relation.data[unit][
-                    self.__INGRESS_ADDR_REL_DATA_KEY]
+                    self.__INGRESS_ADDR_PEER_REL_DATA_KEY]
             except KeyError:
                 # This unit hasn't shared its address yet. It's OK as there will
                 # be other hook executions later calling this again:
@@ -207,7 +245,7 @@ class ZookeeperK8SCharm(CharmBase):
         MAIN_CONFIG_FILE_PATH = '/conf/zoo.cfg'
         ID_CONFIG_FILE_PATH = '/data/myid'
 
-        client_port = self.config['client-port']
+        client_port = self.config[self.__CLIENT_PORT_CONFIG_KEY]
         server_port = self.config['server-port']
         leader_election_port = self.config['leader-election-port']
 
@@ -267,7 +305,7 @@ class ZookeeperK8SCharm(CharmBase):
 
     @contextmanager
     def __zookeeper_client(self):
-        client_port = self.config['client-port']
+        client_port = self.config[self.__CLIENT_PORT_CONFIG_KEY]
         zk = KazooClient(hosts='127.0.0.1:{}'.format(client_port))
         zk.start()
         try:

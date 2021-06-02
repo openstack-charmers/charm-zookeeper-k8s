@@ -68,7 +68,7 @@ zookeeper-k8s-0                  2/2     Running   0          92s
 This teaches us the IP addresses (here `10.1.0.47-49`) and the TCP port (`2181`)
 to be used in order to access the ZooKeeper data from any client.
 
-Zookeeper can be seeded with some dummy data:
+ZooKeeper can be seeded with some dummy data:
 
 ```
 $ juju run-action zookeeper-k8s/0 seed-data --wait
