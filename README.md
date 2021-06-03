@@ -1,5 +1,8 @@
 # zookeeper-k8s
 
+[![Charmhub](https://img.shields.io/badge/Charmhub-orange)](https://charmhub.io/zookeeper-k8s)
+[![GitHub](https://img.shields.io/badge/GitHub-orange)](https://github.com/openstack-charmers/charm-zookeeper-k8s)
+
 ## Description
 
 This [Juju Charmed Operator](https://juju.is/docs) deploys
