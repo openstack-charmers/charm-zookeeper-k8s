@@ -219,6 +219,34 @@ difference and uses the words interchangeably. Reported
 [here](https://discourse.charmhub.io/t/resources/4468/2).
 
 
+### Charmhub
+
+#### metadata.yaml
+
+##### Changes not reflected
+
+I was releasing to `channel=beta` only at first and it turned out that changes
+to the metadata.yaml are only reflected on the Web UI if releasing to
+`channel=stable`, even if I have never released to that channel yet. I.e. each
+time I would release to `channel=beta` my README changes would be reflected but
+not my metadata changes.
+
+
+##### Incomplete documentation
+
+The [documentation](https://discourse.charmhub.io/t/charm-metadata-v2/3674)
+isn't up-to-date, as it doesn't contain e.g.
+[`docs:`](https://juju.is/docs/sdk/charm-documentation). Confirmed with the
+Web team that this is the only undocumented property.
+
+
+##### Can't link to the GitHub repo
+
+On the Charmstore this was possible with the `charm` snap. On the Charmhub the
+possibility to provide a link to GitHub isn't implemented yet. Confirmed with
+the Web team.
+
+
 ## Discourse
 
 Not having my documentation together with the source code makes it really hard

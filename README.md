@@ -23,7 +23,7 @@ A non-sidecar version of this charm is also
 
 ```
 $ juju add-model myzookeeper
-$ juju deploy zookeeper-k8s -n 3 --channel beta
+$ juju deploy zookeeper-k8s -n 3
 ```
 
 Where:
@@ -33,9 +33,6 @@ Where:
 * `-n`: the number of Juju units to deploy, i.e. the number of wanted k8s pods.
   Any number `>= 1` is supported but for production you should pick
   [an odd number `>= 3`](https://zookeeper.apache.org/doc/current/zookeeperStarted.html#sc_RunningReplicatedZooKeeper).
-* `beta`: the name of the
-  [Charmhub's channel](https://charmhub.io/zookeeper-k8s) to use in order to
-  select the software revision to deploy.
 
 ### Inspecting/Operating
 
