@@ -134,6 +134,8 @@ $ firefox http://localhost:9000
 Create and activate a virtualenv with the development requirements:
 
 ```
+$ git clone https://github.com/openstack-charmers/charm-zookeeper-k8s
+$ cd charm-zookeeper-k8s/
 $ virtualenv -p python3 venv
 $ source venv/bin/activate
 $ pip install -r requirements-dev.txt

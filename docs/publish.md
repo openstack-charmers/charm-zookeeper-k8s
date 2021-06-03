@@ -5,6 +5,8 @@ $ charmcraft pack
 $ charmcraft login
 $ charmcraft upload zookeeper-k8s.charm
 Revision 1 of 'zookeeper-k8s' created
+$ git tag rev001
+$ git push --tags
 $ charmcraft release zookeeper-k8s --revision=1 --channel=beta --resource=zookeeper-image:1
 $ charmcraft status zookeeper-k8s
 Track    Channel    Version    Revision    Resources

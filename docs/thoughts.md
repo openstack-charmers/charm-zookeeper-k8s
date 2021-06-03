@@ -112,6 +112,12 @@ libraries. Reported
 [here](https://discourse.charmhub.io/t/libraries/4467/2?u=aurelien-lourot).
 
 
+#### Library version
+
+What's the difference between the folder's name `v0/` and `LIBAPI = 0`? (See
+[documentation](https://juju.is/docs/sdk/libraries).) Or do they have to match?
+
+
 ### Changing the workload's exposed port
 
 My workload docker image does `EXPOSE 2181` and I wanted to be able to change
@@ -245,6 +251,16 @@ Web team that this is the only undocumented property.
 On the Charmstore this was possible with the `charm` snap. On the Charmhub the
 possibility to provide a link to GitHub isn't implemented yet. Confirmed with
 the Web team.
+
+
+##### Reactive vs. Operator warning
+
+Even if the charm is made with the Operator framework, the Web UI still shows
+
+> While many Reactive Framework charms work on machines today, it’s recommended
+> to create new charms with the Operator Framework.
+
+`jkfran` had to fix it manually for me.
 
 
 ## Discourse
