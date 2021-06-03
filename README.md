@@ -2,7 +2,7 @@
 
 ## Description
 
-This [Juju charm](https://juju.is/docs) deploys
+This [Juju Charmed Operator](https://juju.is/docs) deploys
 [Apache ZooKeeper](https://zookeeper.apache.org/) on top of Kubernetes. It is
 implemented using the [Charmed Operator Framework](https://juju.is/docs/sdk),
 designed to deploy a standard [OCI](https://opencontainers.org/) (e.g. Docker)
@@ -23,17 +23,19 @@ A non-sidecar version of this charm is also
 
 ```
 $ juju add-model myzookeeper
-$ juju deploy zookeeper-k8s -n 3 --resource zookeeper-image=zookeeper
+$ juju deploy zookeeper-k8s -n 3 --channel beta
 ```
 
 Where:
 
+* `zookeeper-k8s`: the name of this Charmed Operator on the
+  [Charmhub](https://charmhub.io/zookeeper-k8s).
 * `-n`: the number of Juju units to deploy, i.e. the number of wanted k8s pods.
   Any number `>= 1` is supported but for production you should pick
   [an odd number `>= 3`](https://zookeeper.apache.org/doc/current/zookeeperStarted.html#sc_RunningReplicatedZooKeeper).
-* `zookeeper-image`: [OCI](https://opencontainers.org/) (e.g. Docker) ZooKeeper
-  image. Use `zookeeper` for the
-  [latest image from DockerHub](https://hub.docker.com/_/zookeeper).
+* `beta`: the name of the
+  [Charmhub's channel](https://charmhub.io/zookeeper-k8s) to use in order to
+  select the software revision to deploy.
 
 ### Inspecting/Operating
 
@@ -123,9 +125,9 @@ $ sudo snap install zoonavigator  # ZooNavigator's Web-UI is then served at:
 $ firefox http://localhost:9000
 ```
 
-![ZooNavigator Login](docs/zoonavigator_login.png)
+![ZooNavigator Login](https://github.com/openstack-charmers/charm-zookeeper-k8s/raw/master/docs/zoonavigator_login.png)
 
-![ZooNavigator Data](docs/zoonavigator_data.png)
+![ZooNavigator Data](https://github.com/openstack-charmers/charm-zookeeper-k8s/raw/master/docs/zoonavigator_data.png)
 
 ## Developing
 
@@ -152,3 +154,12 @@ $ ./run_tests
 $ charmcraft pack
 $ juju deploy ./zookeeper-k8s.charm -n 3 --resource zookeeper-image=zookeeper
 ```
+
+Where:
+
+* `-n`: the number of Juju units to deploy, i.e. the number of wanted k8s pods.
+  Any number `>= 1` is supported but for production you should pick
+  [an odd number `>= 3`](https://zookeeper.apache.org/doc/current/zookeeperStarted.html#sc_RunningReplicatedZooKeeper).
+* `zookeeper-image`: [OCI](https://opencontainers.org/) (e.g. Docker) ZooKeeper
+  image. Use `zookeeper` for the
+  [latest image from DockerHub](https://hub.docker.com/_/zookeeper).

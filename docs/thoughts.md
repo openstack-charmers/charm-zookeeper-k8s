@@ -5,16 +5,14 @@ Writing down some thoughts along the way.
 
 ## Charmcraft
 
-### charmcraft init
+### Auto-completion
 
-At the beginning of my project my folder isn't empty. Instead it contains
-already an initial `.git/` subfolder. `charmcraft init` should tolerate this
-IMHO but instead fails with:
+In bash:
 
-```
-$ charmcraft init
-/home/lourot/Documents/git/canonical/charm-zookeeper-k8s is not empty (consider using --force to work on nonempty directories) (full execution logs in /home/lourot/snap/charmcraft/common/charmcraft-
-log-9qqbpl9b)
+```bash
+$ ls *.charm
+zookeeper-k8s.charm
+$ charmcraft upload zoo[TAB][TAB][TAB]  # no auto-completion
 ```
 
 
@@ -25,7 +23,7 @@ log-9qqbpl9b)
 I decided to use [microk8s](https://microk8s.io/) for developing, which ships
 Juju as one of its deps:
 
-```
+```bash
 $ sudo snap install --classic microk8s
 $ sudo snap alias microk8s.kubectl kubectl
 $ sudo snap alias microk8s.juju juju
@@ -34,7 +32,7 @@ $ sudo snap alias microk8s.juju juju
 Unfortunately this is Juju 2.8.6 at the moment, which doesn't see to support
 sidecar charms yet:
 
-```
+```bash
 $ juju deploy ./zookeeper-k8s.charm --resource zookeeper-image=zookeeper
 WARNING zookeeper-k8s does not declare supported series in metadata.yml
 ERROR series "bionic" in a kubernetes model not valid
@@ -42,7 +40,7 @@ ERROR series "bionic" in a kubernetes model not valid
 
 I had to install Juju 2.9.0 instead for it to work:
 
-```
+```bash
 $ sudo snap unalias juju
 $ sudo snap install --classic juju
 ```
@@ -53,7 +51,7 @@ $ sudo snap install --classic juju
 As a newbie it's not clear to me if `juju ssh zookeeper-k8s/0` will bring me to
 the ZooKeeper container or to the sidecar container
 
-```
+```bash
 $ juju status
 Model  Controller  Cloud/Region        Version  SLA          Timestamp
 hello  micro       microk8s/localhost  2.9.0    unsupported  09:52:18Z
@@ -71,7 +69,7 @@ zookeeper-k8s/0*  active    idle   10.1.0.11
 
 I wish I could specify a default OCI image in
 
-```
+```yaml
 resources:
   zookeeper-image:
     type: oci-image
@@ -85,7 +83,7 @@ command-line.
 
 This forces me to duplicate the docker `CMD`:
 
-```
+```python
         pebble_layer = {
             "summary": "httpbin layer",
             "description": "pebble config layer for httpbin",
@@ -103,6 +101,16 @@ This forces me to duplicate the docker `CMD`:
 
 
 ## Operator Framework
+
+### Implementing relations
+
+[The documentation about relations](https://juju.is/docs/sdk/relations) should
+at least mention the
+[documentation about libraries](https://juju.is/docs/sdk/libraries) otherwise I
+have no chance to know that I should implement relations/interfaces as
+libraries. Reported
+[here](https://discourse.charmhub.io/t/libraries/4467/2?u=aurelien-lourot).
+
 
 ### Changing the workload's exposed port
 
@@ -122,7 +130,7 @@ different port, and the Juju+k8s stack just exposes all ports anyway.
 
 It took me a while to figure this out:
 
-```
+```bash
 # Get pod name:
 kubectl get all --namespace=<juju-model-name>
 
@@ -140,7 +148,7 @@ kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper --stdin --tty 
 
 `push()` (Pebble) needs to be mocked away:
 
-```
+```python
     @patch('ops.model.Container.push')
     def test_config_changed(self, mock_push):
         self.harness.update_config({"thing": "foo"})
@@ -183,7 +191,7 @@ need to let each unit actively share its ingress address to its peers.
 
 #### ingress_address returs None
 
-```
+```python
 # ops/model.py
 
 class Network:
@@ -202,6 +210,13 @@ class Network:
 ```
 
 But it always returns `None` and one needs to use `bind_address` instead
+
+
+### Revision vs. version
+
+The [documentation](https://juju.is/docs/sdk/resources) isn't clear about the
+difference and uses the words interchangeably. Reported
+[here](https://discourse.charmhub.io/t/resources/4468/2).
 
 
 ## Discourse

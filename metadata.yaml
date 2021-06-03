@@ -14,8 +14,6 @@
 
 name: zookeeper-k8s
 description: |
-  Zookeeper k8s sidecar charm
-summary: |
   This Juju charm deploys Apache ZooKeeper on top of Kubernetes. It is
   implemented using the Charmed Operator Framework, designed to deploy a
   standard OCI (e.g. Docker) ZooKeeper image alongside a sidecar container
@@ -24,6 +22,8 @@ summary: |
   Apache ZooKeeper is a service for storing the configuration (key-value store)
   of a distributed system and helping with synchronization between components of
   that system.
+summary: |
+  Zookeeper k8s sidecar charm
 
 containers:
   zookeeper:
