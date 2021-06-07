@@ -4,15 +4,16 @@
 $ charmcraft pack
 $ charmcraft login
 $ charmcraft upload zookeeper-k8s.charm
-Revision 1 of 'zookeeper-k8s' created
-$ git tag rev001
+Revision 4 of 'zookeeper-k8s' created
+$ git tag rev004
 $ git push --tags
-$ charmcraft release zookeeper-k8s --revision=1 --channel=beta --resource=zookeeper-image:1
+$ charmcraft release zookeeper-k8s --revision=4 --channel=stable --resource=zookeeper-image:1
+$ charmcraft release zookeeper-k8s --revision=4 --channel=beta --resource=zookeeper-image:1
 $ charmcraft status zookeeper-k8s
 Track    Channel    Version    Revision    Resources
-latest   stable     -          -           -
-         candidate  -          -           -
-         beta       1          1           zookeeper-image (r1)
+latest   stable     4          4           zookeeper-image (r1)
+         candidate  ↑          ↑           ↑
+         beta       4          4           zookeeper-image (r1)
          edge       ↑          ↑           ↑
 ```
 

@@ -28,7 +28,8 @@ import os
 import textwrap
 
 from charms.zookeeper_k8s.v0.zookeeper import (
-    INGRESS_ADDR_CLIENT_REL_DATA_KEY, PORT_CLIENT_REL_DATA_KEY)
+    INGRESS_ADDR_CLIENT_REL_DATA_KEY, INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR,
+    PORT_CLIENT_REL_DATA_KEY)
 
 from contextlib import contextmanager
 
@@ -185,10 +186,11 @@ class ZookeeperK8SCharm(CharmBase):
             return
 
         relation.data[self.model.app][INGRESS_ADDR_CLIENT_REL_DATA_KEY] = (
-            all_unit_ingress_addresses)
+            INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR.join(
+                all_unit_ingress_addresses))
 
         port = self.config[self.__CLIENT_PORT_CONFIG_KEY]
-        relation.data[self.model.app][PORT_CLIENT_REL_DATA_KEY] = port
+        relation.data[self.model.app][PORT_CLIENT_REL_DATA_KEY] = str(port)
 
     def _get_all_unit_ingress_addresses(self, relation):
         """Get all ingress addresses shared by all peers over the relation.

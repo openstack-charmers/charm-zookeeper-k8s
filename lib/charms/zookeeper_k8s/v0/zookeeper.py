@@ -64,9 +64,10 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 8
+LIBPATCH = 9
 
 INGRESS_ADDR_CLIENT_REL_DATA_KEY = 'ingress-addresses'
+INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR = ','
 PORT_CLIENT_REL_DATA_KEY = 'client-port'
 
 
@@ -84,7 +85,8 @@ class ZookeeperRequires(Object):
             return
 
         zookeeper_addresses = event.relation.data[event.app].get(
-            INGRESS_ADDR_CLIENT_REL_DATA_KEY)
+            INGRESS_ADDR_CLIENT_REL_DATA_KEY).split(
+                INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR)
         zookeeper_port = event.relation.data[event.app].get(
             PORT_CLIENT_REL_DATA_KEY)
 
