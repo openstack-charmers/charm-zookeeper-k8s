@@ -176,16 +176,16 @@ class ZookeeperK8SCharm(CharmBase):
             return
 
         relation = self.model.get_relation('client')
-        if relation is None:
-            # That relation doesn't exist yet. Nothing can be done now. Will be
+        port = self.config[self.__CLIENT_PORT_CONFIG_KEY]
+        if relation is None or port is None or len(
+                all_unit_ingress_addresses) < 1:
+            # Too early. Nothing can be done now. Will be
             # done later.
             return
 
         relation.data[self.model.app][INGRESS_ADDR_CLIENT_REL_DATA_KEY] = (
             INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR.join(
                 all_unit_ingress_addresses))
-
-        port = self.config[self.__CLIENT_PORT_CONFIG_KEY]
         relation.data[self.model.app][PORT_CLIENT_REL_DATA_KEY] = str(port)
 
     def _get_all_unit_ingress_addresses(self, relation):
