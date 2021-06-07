@@ -54,6 +54,8 @@ You can file bugs
 [here](https://github.com/openstack-charmers/charm-zookeeper-k8s/issues)!
 """
 
+import logging
+
 from ops.charm import CharmEvents, RelationChangedEvent
 from ops.framework import EventBase, EventSource, Object
 
@@ -65,37 +67,41 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 10
+LIBPATCH = 11
 
 INGRESS_ADDR_CLIENT_REL_DATA_KEY = 'ingress-addresses'
 INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR = ','
 PORT_CLIENT_REL_DATA_KEY = 'client-port'
+
+logger = logging.getLogger(__name__)
 
 
 class ZookeeperRequires(Object):
     def __init__(self, charm, stored):
         super().__init__(charm, None)
         self.framework.observe(charm.on.zookeeper_relation_changed,
-                               self.__on_relation_changed)
+                               self._on_relation_changed)
         self.charm = charm
-        self.stored = stored
+        self._stored = stored
+        self._stored.set_default(zookeeper_addresses='', zookeeper_port='')
 
-    def __on_relation_changed(self, event: RelationChangedEvent):
-        # Do nothing if we're not the leader
+    def _on_relation_changed(self, event: RelationChangedEvent):
+        logging.debug('Handling Juju relation change...')
+
         if not self.model.unit.is_leader():
+            logging.debug('Not leader, nothing to be done')
             return
 
+        # Get values passed on the relation:
         zookeeper_addresses = event.relation.data[event.app].get(
             INGRESS_ADDR_CLIENT_REL_DATA_KEY).split(
                 INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR)
         zookeeper_port = event.relation.data[event.app].get(
             PORT_CLIENT_REL_DATA_KEY)
 
-        self.stored.apps.update({event.relation.id: {
-            'zookeeper-addresses': zookeeper_addresses,
-            'zookeeper-port': zookeeper_port,
-        }})
-
+        # Store them in the local charm's state and emit an event:
+        self._stored.zookeeper_addresses = zookeeper_addresses
+        self._stored.zookeeper_port = zookeeper_port
         self.charm.on.zookeeper_relation_updated.emit()
 
 
