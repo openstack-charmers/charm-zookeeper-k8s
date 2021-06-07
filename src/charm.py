@@ -35,7 +35,6 @@ from contextlib import contextmanager
 
 from kazoo.client import KazooClient
 from ops.charm import CharmBase
-from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus
 
@@ -48,7 +47,6 @@ class ZookeeperK8SCharm(CharmBase):
     __PEBBLE_SERVICE_NAME = 'zookeeper'
     __INGRESS_ADDR_PEER_REL_DATA_KEY = 'ingress-address'
     __CLIENT_PORT_CONFIG_KEY = 'client-port'
-    _stored = StoredState()  # FIXME remove?
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -71,8 +69,6 @@ class ZookeeperK8SCharm(CharmBase):
                                self._on_dump_data_action)
         self.framework.observe(self.on.seed_data_action,
                                self._on_seed_data_action)
-
-        self._stored.set_default(things=[])
 
     def _on_zookeeper_pebble_ready(self, event):
         """Define and start a workload using the Pebble API.
