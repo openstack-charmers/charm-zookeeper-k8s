@@ -255,11 +255,6 @@ Apparently the Web team has to
 for each and every sidecar charm.
 
 
-#### Library page
-
-Private classes shouldn't be displayed.
-
-
 ## Discourse
 
 Not having my documentation together with the source code makes it really hard

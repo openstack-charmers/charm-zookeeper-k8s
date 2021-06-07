@@ -40,6 +40,7 @@ requires:
 from charms.zookeeper_k8s.v0.zookeeper import ZookeeperRequires
 
 class ZookeeperDummyClientK8SCharm(CharmBase):
+    on = ZookeeperRelationCharmEvents()
     _stored = StoredState()
 
     def __init__(self, *args):
@@ -64,7 +65,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 9
+LIBPATCH = 10
 
 INGRESS_ADDR_CLIENT_REL_DATA_KEY = 'ingress-addresses'
 INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR = ','
@@ -98,7 +99,7 @@ class ZookeeperRequires(Object):
         self.charm.on.zookeeper_relation_updated.emit()
 
 
-class _ZookeeperRelationCharmEvents(CharmEvents):
+class ZookeeperRelationCharmEvents(CharmEvents):
     class ZookeeperRelationUpdatedEvent(EventBase):
         pass
 
