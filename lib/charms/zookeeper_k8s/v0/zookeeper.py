@@ -10,7 +10,7 @@ The *provider* side of this interface is implemented by the
 
 Any Charmed Operator that *requires* a ZooKeeper database for providing its
 service should implement the *requirer* side of this interface.
-[zookeeper-dummy-client-k8s](https://github.com/AurelienLourot/charm-zookeeper-dummy-client-k8s)
+[zookeeper-dummy-client-k8s](https://charmhub.io/zookeeper-dummy-client-k8s)
 is an example.
 
 These two Charmed Operators would then be related to each other with
@@ -67,7 +67,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 11
+LIBPATCH = 12
 
 INGRESS_ADDR_CLIENT_REL_DATA_KEY = 'ingress-addresses'
 INGRESS_ADDR_CLIENT_REL_DATA_SEPARATOR = ','
