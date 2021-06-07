@@ -227,9 +227,7 @@ difference and uses the words interchangeably. Reported
 
 ### Charmhub
 
-#### metadata.yaml
-
-##### Changes not reflected
+#### metadata.yaml changes not always reflected
 
 I was releasing to `channel=beta` only at first and it turned out that changes
 to the metadata.yaml are only reflected on the Web UI if releasing to
@@ -238,22 +236,14 @@ time I would release to `channel=beta` my README changes would be reflected but
 not my metadata changes.
 
 
-##### Incomplete documentation
-
-The [documentation](https://discourse.charmhub.io/t/charm-metadata-v2/3674)
-isn't up-to-date, as it doesn't contain e.g.
-[`docs:`](https://juju.is/docs/sdk/charm-documentation). Confirmed with the
-Web team that this is the only undocumented property.
-
-
-##### Can't link to the GitHub repo
+#### Can't link to the GitHub repo
 
 On the Charmstore this was possible with the `charm` snap. On the Charmhub the
 possibility to provide a link to GitHub isn't implemented yet. Confirmed with
 the Web team.
 
 
-##### Reactive vs. Operator warning
+#### Reactive vs. Operator warning
 
 Even if the charm is made with the Operator framework, the Web UI still shows
 
@@ -263,6 +253,11 @@ Even if the charm is made with the Operator framework, the Web UI still shows
 Apparently the Web team has to
 [fix it manually](https://github.com/canonical-web-and-design/charmhub.io/pull/1033)
 for each and every sidecar charm.
+
+
+#### Library page
+
+Private classes shouldn't be displayed.
 
 
 ## Discourse
