@@ -107,6 +107,8 @@ This forces me to duplicate the docker `CMD`:
         }
 ```
 
+Reported [here](https://bugs.launchpad.net/juju/+bug/1929861).
+
 
 ## Operator Framework
 
@@ -279,7 +281,9 @@ for each and every sidecar charm.
 
 ## Discourse
 
-Not having my documentation together with the source code makes it really hard
-for my users to find the documentation that applies to a specific version of
-the charm. Which channel (stable, edge) should the Discourse page be showing?
-If stable, where do I develop the edge documentation?
+I'm not a big fan of Discourse when it comes to suggesting edits to improve
+documentation. On paper, Discourse sounds easy: you just reply to a post in
+order to suggest an edit. But if you have ever done it in real life, you know
+it's not that easy to really make yourself clear in a reply. You can't actually
+submit an edit for review yourself like you would do with a pull-request on
+GitHub.
