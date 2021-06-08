@@ -79,6 +79,14 @@ so that my user doesn't need to pass that value at deploy-time on the
 command-line.
 
 
+### Charm without workload/container
+
+I implemented a [dummy client](https://charmhub.io/zookeeper-dummy-client-k8s)
+for validating this charm. It has no workload, so it just deploys a dummy
+`ubuntu` container. I wish it were possible to not have to define that dummy
+container. Reported [here](https://bugs.launchpad.net/juju/+bug/1928991)
+
+
 ## Pebble
 
 This forces me to duplicate the docker `CMD`:
@@ -118,6 +126,14 @@ What's the difference between the folder's name `v0/` and `LIBAPI = 0`? (See
 [documentation](https://juju.is/docs/sdk/libraries).) Or do they have to match?
 
 
+#### `publish-lib` / `fetch-lib`
+
+This works great if you have one snippet (one file) you want to share between
+two charms. My intuition is that it's too simple and will bite back as soon as
+you'll trees of dependencies you want to share. There are reasons why other
+frameworks make us of more advanced systems like git submodules and/or pip.
+
+
 ### Changing the workload's exposed port
 
 My workload docker image does `EXPOSE 2181` and I wanted to be able to change
@@ -130,6 +146,8 @@ and this made sense to me). Possibly something like a
 It took me a long time to understand that I didn't need to do anything of that
 at all: all I had to do was to tell my workload software to listen to a
 different port, and the Juju+k8s stack just exposes all ports anyway.
+
+[Related issue.](https://bugs.launchpad.net/juju/+bug/1920960)
 
 
 ### Browsing the workload's filesystem
@@ -194,6 +212,9 @@ NotImplementedError: <bound method _TestingPebbleClient.push of <ops.testing._Te
 This seems to be a wheel that many charms will need to re-invent: for now we
 need to let each unit actively share its ingress address to its peers.
 
+Even just getting the current unit's ingress address
+[is tedious](https://github.com/canonical/operator/issues/534).
+
 
 #### ingress_address returs None
 
@@ -215,7 +236,8 @@ class Network:
         """
 ```
 
-But it always returns `None` and one needs to use `bind_address` instead
+But it always returns `None` and one needs to use `bind_address` instead.
+Reported [here](https://bugs.launchpad.net/juju/+bug/1922133).
 
 
 ### Revision vs. version

@@ -160,7 +160,11 @@ class ZookeeperK8SCharm(CharmBase):
         event.set_results({})
 
     def _share_address_with_peers(self, my_ingress_address, relation):
-        """Share this unit's ingress address with peer units."""
+        """Share this unit's ingress address with peer units.
+
+        :param relation: the peer relation
+        :type relation: ops.model.Relation
+        """
         relation.data[self.unit][self.__INGRESS_ADDR_PEER_REL_DATA_KEY] = (
             my_ingress_address)
 
@@ -193,6 +197,8 @@ class ZookeeperK8SCharm(CharmBase):
 
         Including the current unit.
 
+        :param relation: the peer relation
+        :type relation: ops.model.Relation
         :returns: Each unit's (first) ingress address.
         :rtype: List[str]
         """
@@ -221,12 +227,15 @@ class ZookeeperK8SCharm(CharmBase):
     def _get_my_ingress_address(self, relation):
         """Returns this unit's address on which it wishes to be contacted.
 
+        :param relation: the peer relation. See
+                         https://github.com/canonical/operator/issues/534
+        :type relation: ops.model.Relation
         :returns: This unit's (first) ingress address.
         :rtype: str
         """
         network = self.model.get_binding(relation).network
         # There seems to be a bug and `ingress_address` is always None. See
-        # FIXME link to GitHub/Launchpad bug
+        # https://bugs.launchpad.net/juju/+bug/1922133
         return str(network.ingress_address or network.bind_address)
 
     def __push_zookeeper_config(self, workload_container, my_ingress_address,
