@@ -24,6 +24,7 @@ description: |
   that system.
 summary: |
   ZooKeeper k8s sidecar charm
+docs: https://discourse.charmhub.io/t/zookeeper-k8s-docs-index/4704
 
 containers:
   zookeeper:
