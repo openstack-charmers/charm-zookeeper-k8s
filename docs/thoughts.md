@@ -3,9 +3,53 @@
 This is the first time I implement a [sidecar charn](https://juju.is/docs/sdk).
 Writing down some thoughts along the way.
 
-## Charmcraft
+## The good
 
-### Auto-completion
+* The code that this framework makes me write is easy to read and grasp, even
+  for someone who isn't familiar with the concepts.
+* The primitives and concepts make sense to me.
+
+
+## Challenges / Issues / Wishlist
+
+**TOC**:
+
++ Charmcraft
+  - [Reporting issues](#reporting-issues)
+  - [Auto-completion](#auto-completion)
++ Juju
+  - [juju deploy](#juju-deploy) - microk8s ships old Juju
+  - :warning: [juju ssh](#juju-ssh) - where?
+  - :warning: [Charm without workload/container](#charm-without-workload-container)
++ :warning: [Pebble](#pebble) - duplicates docker `CMD`
++ Operator Framework
+  - :warning: [Substrate abstraction](#substrate-abstraction)
+  - [Implementing relations](#implementing-relations) - documentation should point to `libraries`
+    * :warning: [Library version](#library-version) - `v0` vs. `LIBAPI = 0`
+    * :warning: [`publish-lib` / `fetch-lib`](#-publish-lib-----fetch-lib-) - what if more complex things to share?
+  - [Changing the workload's exposed port](#changing-the-workload-s-exposed-port)
+  - :warning: [Browsing the workload's filesystem](#browsing-the-workload-s-filesystem)
+  - [Harness](#harness) - mocking `push()`
+  - :warning: [Getting all peer's ingress address](#getting-all-peer-s-ingress-address)
+    * :warning: [ingress_address returs None](#ingress-address-returs-none)
+  - :warning: [Revision vs. version](#revision-vs-version)
+  - Charmhub
+    * [metadata.yaml changes not always reflected](#metadatayaml-changes-not-always-reflected)
+    * [Can't link to the GitHub repo](#can-t-link-to-the-github-repo)
+    * [Reactive vs. Operator warning](#reactive-vs-operator-warning)
++ [Discourse](#discourse)
+
+
+### Charmcraft
+
+#### Reporting issues
+
+https://snapcraft.io/charmcraft has no link to GitHub or Launchpad. People won't
+know where to report issues. Reported
+[here](https://github.com/canonical/charmcraft/issues/371).
+
+
+#### Auto-completion
 
 In bash:
 
@@ -15,10 +59,12 @@ zookeeper-k8s.charm
 $ charmcraft upload zoo[TAB][TAB][TAB]  # no auto-completion
 ```
 
+Reported [here](https://github.com/canonical/charmcraft/issues/372).
 
-## Juju
 
-### juju deploy
+### Juju
+
+#### juju deploy
 
 I decided to use [microk8s](https://microk8s.io/) for developing, which ships
 Juju as one of its deps:
@@ -29,7 +75,7 @@ $ sudo snap alias microk8s.kubectl kubectl
 $ sudo snap alias microk8s.juju juju
 ```
 
-Unfortunately this is Juju 2.8.6 at the moment, which doesn't see to support
+Unfortunately this is Juju 2.8.6 at the moment, which doesn't seem to support
 sidecar charms yet:
 
 ```bash
@@ -45,8 +91,11 @@ $ sudo snap unalias juju
 $ sudo snap install --classic juju
 ```
 
+This seems to be fixed
+[meanwhile](https://github.com/ubuntu/microk8s/blob/master/snap/snapcraft.yaml#L547).
 
-### juju ssh
+
+#### juju ssh
 
 As a newbie it's not clear to me if `juju ssh zookeeper-k8s/0` will bring me to
 the ZooKeeper container or to the sidecar container
@@ -63,23 +112,10 @@ Unit              Workload  Agent  Address    Ports  Message
 zookeeper-k8s/0*  active    idle   10.1.0.11
 ```
 
-
-### metadata.yaml
-
-
-I wish I could specify a default OCI image in
-
-```yaml
-resources:
-  zookeeper-image:
-    type: oci-image
-```
-
-so that my user doesn't need to pass that value at deploy-time on the
-command-line.
+Reported [here](https://discourse.charmhub.io/t/command-ssh/1834/2).
 
 
-### Charm without workload/container
+#### Charm without workload/container
 
 I implemented a [dummy client](https://charmhub.io/zookeeper-dummy-client-k8s)
 for validating this charm. It has no workload, so it just deploys a dummy
@@ -87,7 +123,7 @@ for validating this charm. It has no workload, so it just deploys a dummy
 container. Reported [here](https://bugs.launchpad.net/juju/+bug/1928991)
 
 
-## Pebble
+### Pebble
 
 This forces me to duplicate the docker `CMD`:
 
@@ -110,9 +146,17 @@ This forces me to duplicate the docker `CMD`:
 Reported [here](https://bugs.launchpad.net/juju/+bug/1929861).
 
 
-## Operator Framework
+### Operator Framework
 
-### Implementing relations
+#### Substrate abstraction
+
+I wish I could more easily write one charm that would both work:
+
+* as a legacy/machine charm, and
+* as a container-orchestration/k8s charm.
+
+
+#### Implementing relations
 
 [The documentation about relations](https://juju.is/docs/sdk/relations) should
 at least mention the
@@ -122,13 +166,13 @@ libraries. Reported
 [here](https://discourse.charmhub.io/t/libraries/4467/2?u=aurelien-lourot).
 
 
-#### Library version
+##### Library version
 
 What's the difference between the folder's name `v0/` and `LIBAPI = 0`? (See
 [documentation](https://juju.is/docs/sdk/libraries).) Or do they have to match?
 
 
-#### `publish-lib` / `fetch-lib`
+##### `publish-lib` / `fetch-lib`
 
 This works great if you have one snippet (one file) you want to share between
 two charms. My intuition is that it's too simple and will bite back as soon as
@@ -136,7 +180,7 @@ you'll trees of dependencies you want to share. There are reasons why other
 frameworks make us of more advanced systems like git submodules and/or pip.
 
 
-### Changing the workload's exposed port
+#### Changing the workload's exposed port
 
 My workload docker image does `EXPOSE 2181` and I wanted to be able to change
 that port with a Juju config option named `client-port`. I searched a long time
@@ -152,7 +196,7 @@ different port, and the Juju+k8s stack just exposes all ports anyway.
 [Related issue.](https://bugs.launchpad.net/juju/+bug/1920960)
 
 
-### Browsing the workload's filesystem
+#### Browsing the workload's filesystem
 
 It took me a while to figure this out:
 
@@ -170,7 +214,7 @@ kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper --stdin --tty 
 ```
 
 
-### Harness
+#### Harness
 
 `push()` (Pebble) needs to be mocked away:
 
@@ -208,8 +252,10 @@ Traceback (most recent call last):
 NotImplementedError: <bound method _TestingPebbleClient.push of <ops.testing._TestingPebbleClient object at 0x7ff3e8df0710>>
 ```
 
+Reported [here](https://github.com/canonical/operator/issues/518).
 
-### Getting all peer's ingress address
+
+#### Getting all peer's ingress address
 
 This seems to be a wheel that many charms will need to re-invent: for now we
 need to let each unit actively share its ingress address to its peers.
@@ -217,8 +263,10 @@ need to let each unit actively share its ingress address to its peers.
 Even just getting the current unit's ingress address
 [is tedious](https://github.com/canonical/operator/issues/534).
 
+Reported [here](https://github.com/canonical/operator/issues/549).
 
-#### ingress_address returs None
+
+##### ingress_address returs None
 
 ```python
 # ops/model.py
@@ -242,16 +290,16 @@ But it always returns `None` and one needs to use `bind_address` instead.
 Reported [here](https://bugs.launchpad.net/juju/+bug/1922133).
 
 
-### Revision vs. version
+#### Revision vs. version
 
 The [documentation](https://juju.is/docs/sdk/resources) isn't clear about the
 difference and uses the words interchangeably. Reported
 [here](https://discourse.charmhub.io/t/resources/4468/2).
 
 
-### Charmhub
+#### Charmhub
 
-#### metadata.yaml changes not always reflected
+##### metadata.yaml changes not always reflected
 
 I was releasing to `channel=beta` only at first and it turned out that changes
 to the metadata.yaml are only reflected on the Web UI if releasing to
@@ -259,15 +307,17 @@ to the metadata.yaml are only reflected on the Web UI if releasing to
 time I would release to `channel=beta` my README changes would be reflected but
 not my metadata changes.
 
+Reported [here](https://discourse.charmhub.io/t/publishing/4462/6).
 
-#### Can't link to the GitHub repo
+
+##### Can't link to the GitHub repo
 
 On the Charmstore this was possible with the `charm` snap. On the Charmhub the
 possibility to provide a link to GitHub isn't implemented yet. Confirmed with
 the Web team.
 
 
-#### Reactive vs. Operator warning
+##### Reactive vs. Operator warning
 
 Even if the charm is made with the Operator framework, the Web UI still shows
 
@@ -279,7 +329,7 @@ Apparently the Web team has to
 for each and every sidecar charm.
 
 
-## Discourse
+### Discourse
 
 I'm not a big fan of Discourse when it comes to suggesting edits to improve
 documentation. On paper, Discourse sounds easy: you just reply to a post in
