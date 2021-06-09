@@ -213,6 +213,9 @@ kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper -- ls /
 kubectl exec --namespace=myzookeeper zookeeper-k8s-0 -c zookeeper --stdin --tty -- bash
 ```
 
+And apparently this can be done with just
+[`juju ssh --container ...`](https://discourse.charmhub.io/t/command-ssh/1834/2)
+
 
 #### Harness
 
