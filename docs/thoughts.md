@@ -15,24 +15,24 @@ Writing down some thoughts along the way.
 **TOC**:
 
 + Charmcraft
-  - [Reporting issues](#reporting-issues)
+  - :heavy_check_mark: [Reporting issues](#reporting-issues)
   - [Auto-completion](#auto-completion)
 + Juju
-  - [juju deploy](#juju-deploy) - microk8s ships old Juju
-  - :warning: [juju ssh](#juju-ssh) - where?
-  - :warning: [Charm without workload/container](#charm-without-workload-container)
-+ :warning: [Pebble](#pebble) - duplicates docker `CMD`
+  - :heavy_check_mark: [juju deploy](#juju-deploy) - microk8s ships old Juju
+  - :star: [juju ssh](#juju-ssh) - where?
+  - :star: [Charm without workload/container](#charm-without-workload-container)
++ :star: [Pebble](#pebble) - duplicates docker `CMD`
 + Operator Framework
-  - :warning: [Substrate abstraction](#substrate-abstraction)
+  - :star: [Substrate abstraction](#substrate-abstraction)
   - [Implementing relations](#implementing-relations) - documentation should point to `libraries`
-    * :warning: [Library version](#library-version) - `v0` vs. `LIBAPI = 0`
-    * :warning: [`publish-lib` / `fetch-lib`](#-publish-lib-----fetch-lib-) - what if more complex things to share?
+    * :star: [Library version](#library-version) - `v0` vs. `LIBAPI = 0`
+    * :star: [`publish-lib` / `fetch-lib`](#-publish-lib-----fetch-lib-) - what if more complex things to share?
   - [Changing the workload's exposed port](#changing-the-workload-s-exposed-port)
-  - :warning: [Browsing the workload's filesystem](#browsing-the-workload-s-filesystem)
+  - :star: [Browsing the workload's filesystem](#browsing-the-workload-s-filesystem)
   - [Harness](#harness) - mocking `push()`
-  - :warning: [Getting all peer's ingress address](#getting-all-peer-s-ingress-address)
-    * :warning: [ingress_address returs None](#ingress-address-returs-none)
-  - :warning: [Revision vs. version](#revision-vs-version)
+  - :star: [Getting all peer's ingress address](#getting-all-peer-s-ingress-address)
+    * :star: [ingress_address returs None](#ingress-address-returs-none)
+  - :star: [Revision vs. version](#revision-vs-version)
   - Charmhub
     * [metadata.yaml changes not always reflected](#metadatayaml-changes-not-always-reflected)
     * [Can't link to the GitHub repo](#can-t-link-to-the-github-repo)
@@ -45,8 +45,8 @@ Writing down some thoughts along the way.
 #### Reporting issues
 
 https://snapcraft.io/charmcraft has no link to GitHub or Launchpad. People won't
-know where to report issues. Reported
-[here](https://github.com/canonical/charmcraft/issues/371).
+know where to report issues. Fixed 
+[meanwhile](https://github.com/canonical/charmcraft/issues/371).
 
 
 #### Auto-completion
