@@ -15,34 +15,34 @@ Writing down some thoughts along the way.
 **TOC**:
 
 + Charmcraft
-  - :heavy_check_mark: [Reporting issues](#reporting-issues)
+  - :heavy_check_mark: [Reporting issues](#heavy_check_mark-reporting-issues)
   - [Auto-completion](#auto-completion)
 + Juju
-  - :heavy_check_mark: [juju deploy](#juju-deploy) - microk8s ships old Juju
-  - :star: [juju ssh](#juju-ssh) - where?
-  - :star: [Charm without workload/container](#charm-without-workload-container)
-+ :star: [Pebble](#pebble) - duplicates docker `CMD`
+  - :heavy_check_mark: [juju deploy](#heavy_check_mark-juju-deploy) - microk8s ships old Juju
+  - :star: [juju ssh](#star-juju-ssh) - where?
+  - :star: [Charm without workload/container](#star-charm-without-workload-container)
++ :star: [Pebble](#star-pebble) - duplicates docker `CMD`
 + Operator Framework
-  - :star: [Substrate abstraction](#substrate-abstraction)
+  - :star: [Substrate abstraction](#star-substrate-abstraction)
   - [Implementing relations](#implementing-relations) - documentation should point to `libraries`
-    * :star: [Library version](#library-version) - `v0` vs. `LIBAPI = 0`
-    * :star: [`publish-lib` / `fetch-lib`](#-publish-lib-----fetch-lib-) - what if more complex things to share?
-  - [Changing the workload's exposed port](#changing-the-workload-s-exposed-port)
-  - :star: [Browsing the workload's filesystem](#browsing-the-workload-s-filesystem)
+    * :star: [Library version](#star-library-version) - `v0` vs. `LIBAPI = 0`
+    * :star: [`publish-lib` / `fetch-lib`](#star-publish-lib--fetch-lib) - what if more complex things to share?
+  - [Changing the workload's exposed port](#changing-the-workloads-exposed-port)
+  - :star: [Browsing the workload's filesystem](#star-browsing-the-workloads-filesystem)
   - [Harness](#harness) - mocking `push()`
-  - :star: [Getting all peer's ingress address](#getting-all-peer-s-ingress-address)
-    * :star: [ingress_address returs None](#ingress-address-returs-none)
-  - :star: [Revision vs. version](#revision-vs-version)
+  - :star: [Getting all peer's ingress address](#star-getting-all-peers-ingress-address)
+    * :star: [ingress_address returs None](#star-ingress-address-returs-none)
+  - :star: [Revision vs. version](#star-revision-vs-version)
   - Charmhub
     * [metadata.yaml changes not always reflected](#metadatayaml-changes-not-always-reflected)
-    * [Can't link to the GitHub repo](#can-t-link-to-the-github-repo)
+    * [Can't link to the GitHub repo](#cant-link-to-the-github-repo)
     * [Reactive vs. Operator warning](#reactive-vs-operator-warning)
 + [Discourse](#discourse)
 
 
 ### Charmcraft
 
-#### Reporting issues
+#### :heavy_check_mark: Reporting issues
 
 https://snapcraft.io/charmcraft has no link to GitHub or Launchpad. People won't
 know where to report issues. Fixed 
@@ -64,7 +64,7 @@ Reported [here](https://github.com/canonical/charmcraft/issues/372).
 
 ### Juju
 
-#### juju deploy
+#### :heavy_check_mark: juju deploy
 
 I decided to use [microk8s](https://microk8s.io/) for developing, which ships
 Juju as one of its deps:
@@ -95,7 +95,7 @@ This seems to be fixed
 [meanwhile](https://github.com/ubuntu/microk8s/blob/master/snap/snapcraft.yaml#L547).
 
 
-#### juju ssh
+#### :star: juju ssh
 
 As a newbie it's not clear to me if `juju ssh zookeeper-k8s/0` will bring me to
 the ZooKeeper container or to the sidecar container
@@ -115,7 +115,7 @@ zookeeper-k8s/0*  active    idle   10.1.0.11
 Reported [here](https://discourse.charmhub.io/t/command-ssh/1834/2).
 
 
-#### Charm without workload/container
+#### :star: Charm without workload/container
 
 I implemented a [dummy client](https://charmhub.io/zookeeper-dummy-client-k8s)
 for validating this charm. It has no workload, so it just deploys a dummy
@@ -123,7 +123,7 @@ for validating this charm. It has no workload, so it just deploys a dummy
 container. Reported [here](https://bugs.launchpad.net/juju/+bug/1928991)
 
 
-### Pebble
+### :star: Pebble
 
 This forces me to duplicate the docker `CMD`:
 
@@ -148,7 +148,7 @@ Reported [here](https://bugs.launchpad.net/juju/+bug/1929861).
 
 ### Operator Framework
 
-#### Substrate abstraction
+#### :star: Substrate abstraction
 
 I wish I could more easily write one charm that would both work:
 
@@ -166,17 +166,17 @@ libraries. Reported
 [here](https://discourse.charmhub.io/t/libraries/4467/2?u=aurelien-lourot).
 
 
-##### Library version
+##### :star: Library version
 
 What's the difference between the folder's name `v0/` and `LIBAPI = 0`? (See
 [documentation](https://juju.is/docs/sdk/libraries).) Or do they have to match?
 
 
-##### `publish-lib` / `fetch-lib`
+##### :star: `publish-lib` / `fetch-lib`
 
 This works great if you have one snippet (one file) you want to share between
 two charms. My intuition is that it's too simple and will bite back as soon as
-you'll trees of dependencies you want to share. There are reasons why other
+you'll have trees of dependencies you want to share. There are reasons why other
 frameworks make us of more advanced systems like git submodules and/or pip.
 
 
@@ -196,7 +196,7 @@ different port, and the Juju+k8s stack just exposes all ports anyway.
 [Related issue.](https://bugs.launchpad.net/juju/+bug/1920960)
 
 
-#### Browsing the workload's filesystem
+#### :star: Browsing the workload's filesystem
 
 It took me a while to figure this out:
 
@@ -258,7 +258,7 @@ NotImplementedError: <bound method _TestingPebbleClient.push of <ops.testing._Te
 Reported [here](https://github.com/canonical/operator/issues/518).
 
 
-#### Getting all peer's ingress address
+#### :star: Getting all peer's ingress address
 
 This seems to be a wheel that many charms will need to re-invent: for now we
 need to let each unit actively share its ingress address to its peers.
@@ -269,7 +269,7 @@ Even just getting the current unit's ingress address
 Reported [here](https://github.com/canonical/operator/issues/549).
 
 
-##### ingress_address returs None
+##### :star: ingress_address returs None
 
 ```python
 # ops/model.py
@@ -293,7 +293,7 @@ But it always returns `None` and one needs to use `bind_address` instead.
 Reported [here](https://bugs.launchpad.net/juju/+bug/1922133).
 
 
-#### Revision vs. version
+#### :star: Revision vs. version
 
 The [documentation](https://juju.is/docs/sdk/resources) isn't clear about the
 difference and uses the words interchangeably. Reported
